@@ -1,0 +1,31 @@
+# Lower-bound constraints (compatible-release). Pins are intentionally loose so
+# wheels resolve across interpreter versions; `pip freeze > requirements.lock`
+# when you want a reproducible deploy lock.
+
+# --- Web framework ---
+fastapi>=0.115
+uvicorn[standard]>=0.34
+
+# --- DB / ORM / migrations ---
+sqlalchemy>=2.0.36
+alembic>=1.14
+psycopg[binary]>=3.2          # Postgres (prod)
+# SQLite ships with Python for dev
+
+# --- Config / validation ---
+pydantic>=2.10
+pydantic-settings>=2.7
+
+# --- Auth ---
+pyjwt>=2.10
+argon2-cffi>=23.1
+
+# --- Services ---
+stripe>=11.4
+boto3>=1.35                   # Cloudflare R2 (S3-compatible)
+resend>=2.5
+
+# --- Dev / test ---
+pytest>=8.3
+httpx>=0.28                   # FastAPI TestClient / async client
+ruff>=0.8

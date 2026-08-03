@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, isort, bugbear, comprehensions, pyupgrade
+select = ["E", "F", "I", "B", "C4", "UP"]
+# datetime.now(timezone.utc) is the accepted idiom here — don't rewrite to datetime.UTC
+ignore = ["UP017"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
