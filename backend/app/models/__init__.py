@@ -13,4 +13,11 @@ from app.models.order import Order
 from app.models.quiz import QuizQuestion, QuizSession
 from app.models.user import User
 
-__all__ = ["User", "Drop", "Brick", "Order", "QuizQuestion", "QuizSession"]
+__all__ = [
+    "User",
+    "Drop",
+    "Brick",
+    "Order",
+    "QuizQuestion",
+    "QuizSession",
+]

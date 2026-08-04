@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String

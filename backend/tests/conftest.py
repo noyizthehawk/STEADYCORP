@@ -6,14 +6,26 @@ from ``Base.metadata`` — so the moment you write a model (and uncomment its
 import in ``app/models/__init__.py``) it exists in the test DB automatically.
 """
 
+import fakeredis
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 import app.models  # noqa: F401  (registers models on Base.metadata)
+from app.core import redis as redis_module
 from app.db import Base, get_db
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def fake_redis():
+    """Swap the Redis client for an in-memory fake so tests need no server."""
+    client = fakeredis.FakeRedis(decode_responses=True)
+    redis_module.set_client(client)
+    yield client
+    client.flushall()
+    redis_module.set_client(None)
 
 
 @pytest.fixture
@@ -24,9 +36,7 @@ def db_session():
         poolclass=StaticPool,  # one shared in-memory connection
     )
     Base.metadata.create_all(engine)
-    TestingSessionLocal = sessionmaker(
-        bind=engine, autoflush=False, expire_on_commit=False
-    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     session = TestingSessionLocal()
     try:
         yield session

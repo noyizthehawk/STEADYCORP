@@ -1,8 +1,8 @@
-"""initial: users, slim drops, distinct-artwork bricks, orders, quiz
+"""initial schema
 
-Revision ID: 498c3a242b98
+Revision ID: 7d086c44c0e6
 Revises: 
-Create Date: 2026-08-03 19:46:04.760624
+Create Date: 2026-08-04 03:15:41.406401
 """
 from collections.abc import Sequence
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '498c3a242b98'
+revision: str = '7d086c44c0e6'
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -38,6 +38,7 @@ def upgrade() -> None:
     sa.Column('hashed_password', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('stripe_customer_id', sa.String(), nullable=True),
+    sa.Column('is_admin', sa.Boolean(), server_default=sa.text('0'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('users', schema=None) as batch_op:

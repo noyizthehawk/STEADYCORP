@@ -15,7 +15,6 @@ from app.models.enums import BrickStatus
 
 
 class Brick(Base):
-
     __tablename__ = "bricks"
     id = Column(Integer, primary_key=True, index=True)
     drop_id = Column(Integer, ForeignKey("drops.id"), nullable=False, index=True)

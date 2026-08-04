@@ -3,7 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health
+from app import health
+from app.auth.endpoint import router as auth_router
 from app.config import get_settings
 
 settings = get_settings()
@@ -23,10 +24,8 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 
-# Feature routers get wired here as they land:
-#   app.include_router(auth.router)
-#   app.include_router(drops.router)
-#   app.include_router(game.router)
-#   app.include_router(checkout.router)
-#   app.include_router(webhooks.router)
+# Feature routers get wired here as they land — prefix/tags applied at include:
+#   from app.drops.endpoint import router as drops_router
+#   app.include_router(drops_router, prefix="/api/drops", tags=["drops"])
