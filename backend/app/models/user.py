@@ -19,7 +19,7 @@ You'll likely want:
 """
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, false
 
 from app.db import Base
 
@@ -34,5 +34,7 @@ class User(Base):
     # When the account was created.
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     stripe_customer_id = Column(String, nullable=True)
+    # Only admins can create drops / bricks / quiz questions.
+    is_admin = Column(Boolean, nullable=False, default=False, server_default=false())
 
 
