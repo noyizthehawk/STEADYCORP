@@ -4,10 +4,11 @@ The URL prefix (/api/auth) and tags are applied where this router is included,
 in app/main.py — so this file just defines handlers.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.deps import get_current_user
 from app.auth.schemas import LoginIn, RegisterIn, UserOut
 from app.config import get_settings
 from app.core.security import (
@@ -17,7 +18,7 @@ from app.core.security import (
     normalize_email,
     verify_password,
 )
-from app.core.sessions import create_session
+from app.core.sessions import create_session, revoke
 from app.db import get_db
 from app.models.user import User
 
@@ -77,3 +78,24 @@ def register(register_request_data: RegisterIn, response: Response, db: Session 
     _set_session_cookie(response, token)
 
     return user
+
+
+@router.get("/me", response_model=UserOut)
+def me(user: User = Depends(get_current_user)):
+    return user
+
+
+@router.post("/logout", status_code=204)
+def logout(request: Request, response: Response):
+    # revoke the session in Redis (if there is one), then clear the cookie.
+    # not gated on being logged in — logout is idempotent and always succeeds.
+    token = request.cookies.get(COOKIE_NAME)
+    if token:
+        revoke(token)
+    response.delete_cookie(
+        key=COOKIE_NAME,
+        path="/",
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite="lax",
+    )
