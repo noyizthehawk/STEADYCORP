@@ -87,8 +87,7 @@ def me(user: User = Depends(get_current_user)):
 
 @router.post("/logout", status_code=204)
 def logout(request: Request, response: Response):
-    # revoke the session in Redis (if there is one), then clear the cookie.
-    # not gated on being logged in — logout is idempotent and always succeeds.
+    
     token = request.cookies.get(COOKIE_NAME)
     if token:
         revoke(token)
