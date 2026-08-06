@@ -87,7 +87,7 @@ def me(user: User = Depends(get_current_user)):
 
 @router.post("/logout", status_code=204)
 def logout(request: Request, response: Response):
-    
+
     token = request.cookies.get(COOKIE_NAME)
     if token:
         revoke(token)

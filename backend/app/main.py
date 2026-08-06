@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import health
 from app.auth.endpoint import router as auth_router
+from app.bricks.endpoint import router as bricks_router
 from app.config import get_settings
 
 settings = get_settings()
@@ -25,6 +26,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(bricks_router, prefix="/api", tags=["bricks"])
 
 # Feature routers get wired here as they land — prefix/tags applied at include:
 #   from app.drops.endpoint import router as drops_router
