@@ -1,7 +1,7 @@
 # Common backend tasks. Run from backend/ with the venv active (or these call it).
 VENV := .venv/bin
 
-.PHONY: install run test lint fmt migrate upgrade downgrade
+.PHONY: install run test lint fmt migrate upgrade downgrade seed
 
 install:
 	python3 -m venv .venv
@@ -27,6 +27,10 @@ migrate:
 
 upgrade:
 	$(VENV)/alembic upgrade head
+
+# seed the dev DB with an admin, a user, and a live drop + bricks
+seed:
+	$(VENV)/python -m app.seed
 
 downgrade:
 	$(VENV)/alembic downgrade -1
