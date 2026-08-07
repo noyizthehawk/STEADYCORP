@@ -39,3 +39,23 @@ def create_drop(payload: DropCreateIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(drop)
     return drop
+
+
+@router.post(
+    "/drops/{code}/publish",
+    response_model=DropOut,
+    dependencies=[Depends(require_admin)],
+)
+def publish_drop(code: str, db: Session = Depends(get_db)):
+    drop = db.scalar(select(Drop).where(Drop.code == code.strip().upper()))
+    if drop is None:
+        raise HTTPException(status_code=404, detail="Drop does not exist")
+    # Only a draft can be published — don't revive a closed drop or re-publish a live one.
+    if drop.status != DropStatus.draft:
+        raise HTTPException(status_code=409, detail="Only a draft drop can be published")
+
+    # Mutate the loaded row and commit — that's how you update an existing record.
+    drop.status = DropStatus.live
+    db.commit()
+    db.refresh(drop)
+    return drop
