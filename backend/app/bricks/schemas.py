@@ -1,6 +1,7 @@
 """Brick request/response schemas."""
 
 from pydantic import BaseModel, ConfigDict
+from pydantic.fields import Field
 
 from app.models.enums import BrickStatus
 
@@ -18,3 +19,10 @@ class BrickReveal(BaseModel):
     image_url: str
     price_cents: int
     status: BrickStatus
+
+
+class BrickCreateIn(BaseModel):
+    number: int = Field(ge=1, le=20)  # which brick (#1–#20)
+    title: str
+    image_url: str
+    price_cents: int = Field(gt=0)
