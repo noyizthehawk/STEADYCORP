@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* One face, one size, pitch black. No per-element text-* sizes anywhere. */
+  body {
+    font-family: "Archivo Black", system-ui, sans-serif;
+    color: #000;
+  }
+}
+
+@layer components {
+  /* Interactive text: black by default, inverts to a black box on hover. */
+  .lnk {
+    @apply cursor-pointer px-2 py-1 transition-colors hover:bg-black hover:text-white;
+  }
+}

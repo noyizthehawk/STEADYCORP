@@ -54,3 +54,30 @@ export async function logout(): Promise<void> {
     throw new Error("Logout failed");
   }
 }
+
+export type BrickStatus = "available" | "held" | "sold";
+
+export type Brick = {
+  number: number;
+  title: string;
+  image_url: string;
+  price_cents: number;
+  status: BrickStatus;
+};
+
+// Turn a typed code into { dropCode, number }. Forgiving: uppercases and
+// tolerates any separator — "DROP01/BRICK07", "drop01 7", "DROP01-BRICK7".
+export function parseBrickCode(input: string): { dropCode: string; number: number } | null {
+  const m = input.trim().toUpperCase().match(/^(DROP\d+)\D+(\d+)$/);
+  return m ? { dropCode: m[1], number: Number(m[2]) } : null;
+}
+
+export async function getBrick(dropCode: string, number: number): Promise<Brick> {
+  const res = await fetch(`${BASE_URL}/api/drops/${dropCode}/bricks/${number}`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error("Nothing here.");
+  }
+  return res.json() as Promise<Brick>;
+}
