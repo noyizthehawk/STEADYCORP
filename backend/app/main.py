@@ -8,6 +8,7 @@ from app.auth.endpoint import router as auth_router
 from app.bricks.endpoint import router as bricks_router
 from app.config import get_settings
 from app.drops.endpoint import router as drops_router
+from app.quiz.endpoint import router as quiz_router
 
 settings = get_settings()
 
@@ -29,7 +30,4 @@ app.include_router(health.router)
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(bricks_router, prefix="/api", tags=["bricks"])
 app.include_router(drops_router, prefix="/api", tags=["drops"])
-
-# Feature routers get wired here as they land — prefix/tags applied at include:
-#   from app.drops.endpoint import router as drops_router
-#   app.include_router(drops_router, prefix="/api/drops", tags=["drops"])
+app.include_router(quiz_router, prefix="/api", tags=["quiz"])

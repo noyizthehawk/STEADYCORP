@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     brick_hold_minutes: int = 10  # BRICK_HOLD_MINUTES
     bricks_per_drop: int = 20  # BRICKS_PER_DROP
 
+    # --- Quiz gate (K-of-N threshold) ---
+    quiz_questions_per_run: int = 6  # QUIZ_QUESTIONS_PER_RUN (N)
+    quiz_required_correct: int = 3  # QUIZ_REQUIRED_CORRECT (K)
+    quiz_seconds_per_question: int = 10  # QUIZ_SECONDS_PER_QUESTION
+
     # --- Email ---
     email_from: str = "drops@steadycorp.example"  # EMAIL_FROM
 

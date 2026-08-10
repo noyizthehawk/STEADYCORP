@@ -2,8 +2,9 @@
 
 The purchase gate is a timed, multiple-choice culture quiz. ``QuizQuestion`` is
 the rotating pool; ``QuizSession`` is the server-authoritative record of an
-in-progress attempt (which questions were issued, when, and the running streak).
-The client never receives ``correct_index`` — grading happens server-side.
+in-progress attempt (which questions were issued, when, and how many are correct).
+Pass = ``correct_count`` reaches K (early-exit); the client never receives
+``correct_index`` — grading happens server-side.
 """
 
 from datetime import datetime, timezone
@@ -40,8 +41,8 @@ class QuizSession(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     brick_id = Column(Integer, ForeignKey("bricks.id"), nullable=False, index=True)
     question_ids = Column(JSON, nullable=False)  # ordered list[int] of issued questions
-    current_index = Column(Integer, nullable=False, default=0)
-    streak = Column(Integer, nullable=False, default=0)
+    current_index = Column(Integer, nullable=False, default=0)  # how many answered
+    correct_count = Column(Integer, nullable=False, default=0)  # pass when this hits K
     issued_at = Column(DateTime, nullable=False)  # when the current question was served
     expires_at = Column(DateTime, nullable=False)
     status = Column(Enum(QuizSessionStatus), nullable=False, default=QuizSessionStatus.open)
