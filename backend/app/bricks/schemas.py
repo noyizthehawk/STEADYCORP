@@ -1,5 +1,7 @@
 """Brick request/response schemas."""
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 from pydantic.fields import Field
 
@@ -26,3 +28,15 @@ class BrickCreateIn(BaseModel):
     title: str
     image_url: str
     price_cents: int = Field(gt=0)
+
+
+class ClaimOut(BaseModel):
+    """Returned when a claim succeeds — what the buyer owes + their hold clock."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    number: int
+    title: str
+    image_url: str
+    price_cents: int
+    held_until: datetime
