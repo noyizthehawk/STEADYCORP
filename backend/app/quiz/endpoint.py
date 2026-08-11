@@ -12,6 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.deps import get_current_user, require_admin
+from app.bricks.schemas import ClaimOut
+from app.bricks.service import claim_brick
 from app.config import get_settings
 from app.db import get_db
 from app.models.brick import Brick
@@ -130,7 +132,7 @@ def answer(
     if user_session.status != QuizSessionStatus.open:
         raise HTTPException(409, "This run is over")
 
-    # overall session expiry — SQLite gives naive datetimes, so force UTC before comparing
+    # force utc before comparing
     expires_at = user_session.expires_at
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
@@ -140,25 +142,25 @@ def answer(
     n = settings.quiz_questions_per_run
     k = settings.quiz_required_correct
 
-    # grade the CURRENT question — the server picks it, never the client
+    # grade the curerent question
     question = db.get(QuizQuestion, user_session.question_ids[user_session.current_index])
 
-    # per-question timer: a late answer just counts as wrong (not an error)
+    # per-question timer: a late answer just counts as wrong
     issued_at = user_session.issued_at
     if issued_at.tzinfo is None:
         issued_at = issued_at.replace(tzinfo=timezone.utc)
     elapsed = (datetime.now(timezone.utc) - issued_at).total_seconds()
-    on_time = elapsed <= settings.quiz_seconds_per_question  # on time is ela[psed <= 10]
+    on_time = elapsed <= settings.quiz_seconds_per_question  # on time 10 seconds
 
     if on_time and answer.choice_index == question.correct_index:  # if correct and on time
         user_session.correct_count += 1
-    user_session.current_index += 1
+    user_session.current_index += 1  # mve to the next question
 
-    answered = user_session.current_index
-    correct = user_session.correct_count
+    answered = user_session.current_index  # else it is wrong
+    correct = user_session.correct_count  # donest count correct
     wrong = answered - correct
 
-    # decide the outcome — early-exit both ways
+    # decide the outcome
     if correct >= k:  # >3 exit early
         user_session.status = QuizSessionStatus.passed
         result, next_question = "passed", None
@@ -178,4 +180,36 @@ def answer(
         correct=correct,
         required_correct=k,
         total_questions=n,
+    )
+
+
+@router.post("/quiz/{session_id}/claim", response_model=ClaimOut)
+def claim(
+    session_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # did the user pass the quiz
+    user_session = db.get(QuizSession, session_id)
+    if user_session is None:
+        raise HTTPException(404, "Session not found")
+    if user_session.user_id != user.id:
+        raise HTTPException(403, "You can't claim this session")
+    if user_session.status != QuizSessionStatus.passed:
+        raise HTTPException(403, "You must pass the quiz first")
+
+    # now funnel to claim brick if all the conditioons pass
+
+    outcome = claim_brick(db, user.id, user_session.brick_id)
+    if outcome == "gone":
+        raise HTTPException(409, "Brick already claimed by another user")
+
+    brick = db.get(Brick, user_session.brick_id)
+    db.refresh(brick) # "It gets the updated data from the DB and loads it into memory."
+    return ClaimOut(
+        number=brick.number,
+        title=brick.title,
+        image_url=brick.image_url,
+        price_cents=brick.price_cents,
+        held_until=brick.held_until,
     )

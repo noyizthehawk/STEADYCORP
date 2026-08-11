@@ -1,6 +1,5 @@
 """Brick inventory operations — business logic (no HTTP). Home of the atomic claim."""
 
-# ── imports you'll reach for; uncomment as you write claim_brick ──
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -15,8 +14,6 @@ from app.models.enums import BrickStatus
 
 #
 settings = get_settings()
-
-
 # firstcheck if brick is available with status
 
 
