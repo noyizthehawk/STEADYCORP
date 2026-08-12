@@ -1,61 +1,71 @@
 import { type FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
+import QuizFlow from "../components/QuizFlow";
 import { type Brick, getBrick, parseBrickCode } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
-function BrickCard({ brick }: { brick: Brick }) {
-  const price = `$${(brick.price_cents / 100).toFixed(2)}`;
-  const gone = brick.status !== "available";
-  return (
-    <div className="space-y-4">
-      <div className="relative">
-        <img
-          src={brick.image_url}
-          alt={brick.title}
-          className={`w-full border border-black ${gone ? "opacity-40" : ""}`}
-        />
-        {gone && (
-          <span className="absolute inset-0 flex items-center justify-center">
-            {brick.status === "sold" ? "GONE" : "HELD"}
-          </span>
-        )}
-      </div>
-      <div className="flex items-center justify-between uppercase">
-        <span>
-          #{String(brick.number).padStart(2, "0")} · {brick.title}
-        </span>
-        <span>{price}</span>
-      </div>
-    </div>
-  );
-}
+type Target = { dropCode: string; number: number };
 
-// The store IS the gate: type a code, see the brick. Public — no login needed.
+// The store IS the gate: type a code, see the brick, buy it (quiz → claim).
 export default function Store() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [code, setCode] = useState("");
   const [brick, setBrick] = useState<Brick | null>(null);
+  const [target, setTarget] = useState<Target | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [phase, setPhase] = useState<"browse" | "quiz">("browse");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setBrick(null);
+    setTarget(null);
 
     const parsed = parseBrickCode(code);
     if (!parsed) {
       setError("Nothing here.");
       return;
     }
-
     setPending(true);
     try {
       setBrick(await getBrick(parsed.dropCode, parsed.number));
+      setTarget(parsed);
     } catch {
       setError("Nothing here.");
     } finally {
       setPending(false);
     }
   }
+
+  function onBuy() {
+    if (!user) {
+      navigate("/signin", { state: { from: "/store" } }); // login required to claim
+      return;
+    }
+    setPhase("quiz");
+  }
+
+  async function backToBrowse() {
+    setPhase("browse");
+    if (target) {
+      try {
+        setBrick(await getBrick(target.dropCode, target.number)); // refresh the status
+      } catch {
+        /* leave the last view as-is */
+      }
+    }
+  }
+
+  if (phase === "quiz" && target) {
+    return <QuizFlow dropCode={target.dropCode} number={target.number} onExit={backToBrowse} />;
+  }
+
+  const price = brick ? `$${(brick.price_cents / 100).toFixed(2)}` : "";
+  const gone = brick ? brick.status !== "available" : false;
 
   return (
     <div className="w-full max-w-md space-y-8">
@@ -69,9 +79,39 @@ export default function Store() {
         />
       </form>
 
-      {pending && <p className="text-center">…</p>}
-      {error && !pending && <p className="text-center uppercase">{error}</p>}
-      {brick && !pending && <BrickCard brick={brick} />}
+      {pending && <p className="text-center text-neutral-500">…</p>}
+      {error && !pending && <p className="text-center uppercase text-neutral-500">{error}</p>}
+
+      {brick && !pending && (
+        <div className="space-y-4">
+          <div className="relative">
+            <img
+              src={brick.image_url}
+              alt={brick.title}
+              className={`w-full border border-black ${gone ? "opacity-40" : ""}`}
+            />
+            {gone && (
+              <span className="absolute inset-0 flex items-center justify-center tracking-[0.2em]">
+                {brick.status === "sold" ? "GONE" : "HELD"}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center justify-between uppercase">
+            <span>
+              #{String(brick.number).padStart(2, "0")} · {brick.title}
+            </span>
+            <span>{price}</span>
+          </div>
+          {!gone && (
+            <button
+              onClick={onBuy}
+              className="w-full border border-black bg-black px-4 py-2 uppercase text-white transition-colors hover:bg-white hover:text-black"
+            >
+              Buy
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

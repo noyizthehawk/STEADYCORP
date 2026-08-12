@@ -41,3 +41,18 @@ def claim_brick(db: Session, user_id: int, brick_id: int) -> Literal["held", "go
     if brick and brick.status == BrickStatus.held and brick.owner_id == user_id:
         return "held"
     return "gone"
+
+
+def is_claimable(brick: Brick, now: datetime | None = None) -> bool:
+    """True if a brick is up for grabs: available, or a hold that has expired.
+
+    Mirrors the WHERE in claim_brick so the Python-side courtesy checks
+    (reveal, quiz-start) never disagree with the atomic claim.
+    """
+    if brick.status == BrickStatus.available:
+        return True
+    if now is None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+    return (
+        brick.status == BrickStatus.held and brick.held_until is not None and brick.held_until < now
+    )

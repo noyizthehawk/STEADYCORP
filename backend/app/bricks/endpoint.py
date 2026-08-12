@@ -6,17 +6,18 @@ from sqlalchemy.orm import Session
 
 from app.auth.deps import require_admin
 from app.bricks.schemas import BrickCreateIn, BrickReveal
+from app.bricks.service import is_claimable
 from app.db import get_db
 from app.models.brick import Brick
 from app.models.drop import Drop
-from app.models.enums import DropStatus
+from app.models.enums import BrickStatus, DropStatus
 
 router = APIRouter()
 
 
 @router.get("/drops/{drop_code}/bricks/{number}", response_model=BrickReveal)
 def get_brick(drop_code: str, number: int, db: Session = Depends(get_db)):
-    # the drop must exist AND be live (no previewing draft/future drops)
+    # the drop must exist AND be li
     drop = db.scalar(select(Drop).where(Drop.code == drop_code))
     if drop is None or drop.status != DropStatus.live:
         raise HTTPException(status_code=404, detail="Nothing here.")
@@ -26,7 +27,15 @@ def get_brick(drop_code: str, number: int, db: Session = Depends(get_db)):
     if brick is None:
         raise HTTPException(status_code=404, detail="Nothing here.")
 
-    return brick
+    # an expired hold reads as available again (same rule as claim_brick)
+    status = BrickStatus.available if is_claimable(brick) else brick.status
+    return BrickReveal(
+        number=brick.number,
+        title=brick.title,
+        image_url=brick.image_url,
+        price_cents=brick.price_cents,
+        status=status,
+    )
 
 
 @router.post(

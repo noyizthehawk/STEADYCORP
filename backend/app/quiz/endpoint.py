@@ -13,12 +13,12 @@ from sqlalchemy.orm import Session
 
 from app.auth.deps import get_current_user, require_admin
 from app.bricks.schemas import ClaimOut
-from app.bricks.service import claim_brick
+from app.bricks.service import claim_brick, is_claimable
 from app.config import get_settings
 from app.db import get_db
 from app.models.brick import Brick
 from app.models.drop import Drop
-from app.models.enums import BrickStatus, DropStatus, QuizSessionStatus
+from app.models.enums import DropStatus, QuizSessionStatus
 from app.models.quiz import QuizQuestion, QuizSession
 from app.models.user import User
 from app.quiz.schemas import (
@@ -75,11 +75,12 @@ def start_quiz(
     if drop is None or drop.status != DropStatus.live:
         raise HTTPException(404, "Drop not found")
 
-    # the brick must exist and still be available, dont waste client time
+    # the brick must exist and still be claimable (available or an expired hold),
+    # matching the revealdon't waste the client's time otherwise
     brick = db.scalar(select(Brick).where(Brick.drop_id == drop.id, Brick.number == number))
     if brick is None:
         raise HTTPException(404, "Brick not found")
-    if brick.status != BrickStatus.available:
+    if not is_claimable(brick):
         raise HTTPException(409, "Gone")
 
     # pick N random questions
@@ -205,7 +206,7 @@ def claim(
         raise HTTPException(409, "Brick already claimed by another user")
 
     brick = db.get(Brick, user_session.brick_id)
-    db.refresh(brick) # "It gets the updated data from the DB and loads it into memory."
+    db.refresh(brick)  # "It gets the updated data from the DB and loads it into memory."
     return ClaimOut(
         number=brick.number,
         title=brick.title,

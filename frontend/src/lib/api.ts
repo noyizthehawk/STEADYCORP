@@ -81,3 +81,75 @@ export async function getBrick(dropCode: string, number: number): Promise<Brick>
   }
   return res.json() as Promise<Brick>;
 }
+
+// ── quiz + claim ──
+
+export type QuizQuestion = { id: number; prompt: string; options: string[] };
+
+export type StartQuiz = {
+  session_id: number;
+  question: QuizQuestion;
+  required_correct: number; // K
+  total_questions: number; // N
+  seconds_per_question: number;
+  answered: number;
+  correct: number;
+};
+
+export type AnswerResult = {
+  result: "next" | "passed" | "failed";
+  question: QuizQuestion | null; // present only when result === "next"
+  answered: number;
+  correct: number;
+  required_correct: number;
+  total_questions: number;
+};
+
+export type Claim = {
+  number: number;
+  title: string;
+  image_url: string;
+  price_cents: number;
+  held_until: string; // naive-UTC ISO from the server
+};
+
+// "gone" (a 409) isn't an error — it's a valid game outcome, so we return it.
+export type ClaimResult = { status: "won"; brick: Claim } | { status: "gone" };
+
+async function detail(res: Response, fallback: string): Promise<string> {
+  const body = await res.json().catch(() => ({}));
+  return typeof body.detail === "string" ? body.detail : fallback;
+}
+
+export async function startQuiz(dropCode: string, number: number): Promise<StartQuiz> {
+  const res = await fetch(`${BASE_URL}/api/drops/${dropCode}/bricks/${number}/quiz/start`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(await detail(res, "Could not start the quiz"));
+  return res.json() as Promise<StartQuiz>;
+}
+
+export async function answerQuestion(
+  sessionId: number,
+  choiceIndex: number,
+): Promise<AnswerResult> {
+  const res = await fetch(`${BASE_URL}/api/quiz/${sessionId}/answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ choice_index: choiceIndex }),
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(await detail(res, "Answer failed"));
+  return res.json() as Promise<AnswerResult>;
+}
+
+export async function claimBrick(sessionId: number): Promise<ClaimResult> {
+  const res = await fetch(`${BASE_URL}/api/quiz/${sessionId}/claim`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (res.ok) return { status: "won", brick: (await res.json()) as Claim };
+  if (res.status === 409) return { status: "gone" }; // won the quiz, lost the race
+  throw new Error(await detail(res, "Claim failed"));
+}
