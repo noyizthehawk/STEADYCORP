@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   answerQuestion,
+  checkout,
   type Claim,
   claimBrick,
   type QuizQuestion,
@@ -20,7 +21,7 @@ type Phase =
 
 // Live countdown to the hold deadline. Server sends naive UTC, so append "Z".
 function HoldClock({ until }: { until: string }) {
-  const target = new Date(until.endsWith("Z") ? until : until + "Z").getTime();
+  const target = new Date(until.endsWith("Z") ? until : until + "Z").getTime(); //turn the deadline to a number
   const [left, setLeft] = useState(() => Math.max(0, Math.floor((target - Date.now()) / 1000)));
   useEffect(() => {
     const id = setInterval(
@@ -190,11 +191,19 @@ export default function QuizFlow({
           Pay within <HoldClock until={claim.held_until} /> — ${(claim.price_cents / 100).toFixed(2)}
         </div>
         <button
-          disabled
-          className="w-full border border-black px-4 py-2 uppercase opacity-40"
-          title="Stripe checkout coming next"
+          onClick={async () => {
+            if (sessionId === null) return;
+            try {
+              const { checkout_url } = await checkout(sessionId);
+              window.location.href = checkout_url; // off to Stripe's hosted page
+            } catch (e) {
+              setMessage(e instanceof Error ? e.message : "Checkout failed");
+              setPhase("error");
+            }
+          }}
+          className="w-full border border-black bg-black px-4 py-2 uppercase text-white transition-colors hover:bg-white hover:text-black"
         >
-          Checkout — coming soon
+          Checkout
         </button>
         <button onClick={onExit} className="lnk">
           ← BACK

@@ -94,7 +94,7 @@ def start_quiz(
         raise HTTPException(409, "Quiz not available,there muse be N questions")
     question_ids = random.sample(pool, k=n)  # sample from pool
 
-    session = QuizSession(
+    session = QuizSession(  # make a session
         user_id=user.id,
         brick_id=brick.id,
         question_ids=question_ids,

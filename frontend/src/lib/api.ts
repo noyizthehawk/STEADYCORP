@@ -153,3 +153,22 @@ export async function claimBrick(sessionId: number): Promise<ClaimResult> {
   if (res.status === 409) return { status: "gone" }; // won the quiz, lost the race
   throw new Error(await detail(res, "Claim failed"));
 }
+
+// ── checkout + collection ──
+
+export type OwnedBrick = { number: number; title: string; image_url: string; price_cents: number };
+
+export async function checkout(sessionId: number): Promise<{ checkout_url: string }> {
+  const res = await fetch(`${BASE_URL}/api/quiz/${sessionId}/checkout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(await detail(res, "Checkout failed"));
+  return res.json() as Promise<{ checkout_url: string }>;
+}
+
+export async function getCollection(): Promise<OwnedBrick[]> {
+  const res = await fetch(`${BASE_URL}/api/me/bricks`, { credentials: "include" });
+  if (!res.ok) throw new Error(await detail(res, "Could not load your collection"));
+  return res.json() as Promise<OwnedBrick[]>;
+}

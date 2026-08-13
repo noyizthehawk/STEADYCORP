@@ -15,7 +15,9 @@ export default function Layout() {
         </Link>
         {user ? (
           <span className="flex items-center gap-2">
-            <span className="px-2 py-1">{user.email}</span>
+            <Link to="/collection" className="lnk">
+              COLLECTION
+            </Link>
             <button onClick={signOut} className="lnk">
               LOG OUT
             </button>

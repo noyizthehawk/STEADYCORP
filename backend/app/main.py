@@ -8,6 +8,7 @@ from app.auth.endpoint import router as auth_router
 from app.bricks.endpoint import router as bricks_router
 from app.config import get_settings
 from app.drops.endpoint import router as drops_router
+from app.orders.endpoint import router as orders_router
 from app.quiz.endpoint import router as quiz_router
 
 settings = get_settings()
@@ -31,3 +32,4 @@ app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(bricks_router, prefix="/api", tags=["bricks"])
 app.include_router(drops_router, prefix="/api", tags=["drops"])
 app.include_router(quiz_router, prefix="/api", tags=["quiz"])
+app.include_router(orders_router, prefix="/api", tags=["orders"])

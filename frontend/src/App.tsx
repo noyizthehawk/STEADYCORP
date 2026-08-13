@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 
 import Layout from "./components/Layout";
+import Collection from "./pages/Collection";
 import Landing from "./pages/Landing";
 import Lookbook from "./pages/Lookbook";
 import SignIn from "./pages/SignIn";
@@ -13,6 +14,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/store" element={<Store />} />
+        <Route path="/collection" element={<Collection />} />
         <Route path="/lookbook" element={<Lookbook />} />
         <Route path="/signin" element={<SignIn />} />
       </Route>
