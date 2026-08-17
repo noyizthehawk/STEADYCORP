@@ -1,5 +1,5 @@
-import { type FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { type FormEvent, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import QuizFlow from "../components/QuizFlow";
 import { type Brick, getBrick, parseBrickCode } from "../lib/api";
@@ -11,6 +11,7 @@ type Target = { dropCode: string; number: number };
 export default function Store() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [code, setCode] = useState("");
   const [brick, setBrick] = useState<Brick | null>(null);
@@ -18,6 +19,23 @@ export default function Store() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [phase, setPhase] = useState<"browse" | "quiz">("browse");
+
+  // Restore the brick from ?b=DROP01-7 — set when a signed-out Buy sends the
+  // user through sign-in, so they land back on their brick instead of an empty
+  // box. Also makes a brick a shareable/refreshable deep link.
+  useEffect(() => {
+    const parsed = parseBrickCode(searchParams.get("b") ?? "");
+    if (!parsed) return; // no param, or garbage — just show the empty box
+    setCode(`${parsed.dropCode}-${parsed.number}`);
+    setPending(true);
+    getBrick(parsed.dropCode, parsed.number)
+      .then((b) => {
+        setBrick(b);
+        setTarget(parsed);
+      })
+      .catch(() => setError("Nothing here."))
+      .finally(() => setPending(false));
+  }, [searchParams]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -43,7 +61,9 @@ export default function Store() {
 
   function onBuy() {
     if (!user) {
-      navigate("/signin", { state: { from: "/store" } }); // login required to claim
+      // carry the brick through sign-in so they return to it, not an empty store
+      const from = target ? `/store?b=${target.dropCode}-${target.number}` : "/store";
+      navigate("/signin", { state: { from } }); // login required to claim
       return;
     }
     setPhase("quiz");
