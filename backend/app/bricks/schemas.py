@@ -24,7 +24,7 @@ class BrickReveal(BaseModel):
 
 
 class BrickCreateIn(BaseModel):
-    number: int = Field(ge=1, le=20)  # which brick (#1–#20)
+    number: int = Field(ge=1, le=20)  # which brick 
     title: str
     image_url: str
     price_cents: int = Field(gt=0)

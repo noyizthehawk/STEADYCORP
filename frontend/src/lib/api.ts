@@ -172,3 +172,91 @@ export async function getCollection(): Promise<OwnedBrick[]> {
   if (!res.ok) throw new Error(await detail(res, "Could not load your collection"));
   return res.json() as Promise<OwnedBrick[]>;
 }
+
+// ── admin: drops, bricks, quiz questions ──
+
+export type DropStatus = "draft" | "live" | "closed";
+
+export type Drop = {
+  id: number;
+  code: string;
+  title: string;
+  go_live_at: string;
+  status: DropStatus;
+  created_at: string;
+};
+
+export type CreateDropPayload = {
+  code: string;
+  title: string;
+  go_live_at: string;
+};
+
+export async function createDrop(payload: CreateDropPayload): Promise<Drop> {
+  const res = await fetch(`${BASE_URL}/api/drops`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await detail(res, "Could not create the drop"));
+  return res.json() as Promise<Drop>;
+}
+
+export async function publishDrop(code: string): Promise<Drop> {
+  const res = await fetch(`${BASE_URL}/api/drops/${code}/publish`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(await detail(res, "Could not publish the drop"));
+  return res.json() as Promise<Drop>;
+}
+
+export type BrickCreatePayload = {
+  number: number;
+  title: string;
+  image_url: string;
+  price_cents: number;
+};
+
+export async function createBrick(code: string, payload: BrickCreatePayload): Promise<Brick> {
+  const res = await fetch(`${BASE_URL}/api/drops/${code}/bricks`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await detail(res, "Could not create the brick"));
+  return res.json() as Promise<Brick>;
+}
+
+export type CreateQuestionPayload = {
+  prompt: string;
+  options: string[];
+  correct_index: number;
+  category?: string | null;
+  drop_id?: number | null;
+};
+
+export type AdminQuizQuestion = {
+  id: number;
+  prompt: string;
+  options: string[];
+  correct_index: number;
+  category: string | null;
+  drop_id: number | null;
+};
+
+export async function createQuizQuestion(
+  payload: CreateQuestionPayload,
+): Promise<AdminQuizQuestion> {
+  const res = await fetch(`${BASE_URL}/api/quiz/questions`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await detail(res, "Could not create the question"));
+  return res.json() as Promise<AdminQuizQuestion>;
+}
+

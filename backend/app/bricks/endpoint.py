@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.get("/drops/{drop_code}/bricks/{number}", response_model=BrickReveal)
 def get_brick(drop_code: str, number: int, db: Session = Depends(get_db)):
-    # the drop must exist AND be li
+    # the drop must exist AND be live
     drop = db.scalar(select(Drop).where(Drop.code == drop_code))
     if drop is None or drop.status != DropStatus.live:
         raise HTTPException(status_code=404, detail="Nothing here.")
