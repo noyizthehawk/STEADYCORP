@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth.deps import require_admin
 from app.db import get_db
 from app.drops.schemas import DropCreateIn, DropOut
+from app.models.brick import Brick
 from app.models.drop import Drop
 from app.models.enums import DropStatus
 
@@ -54,7 +55,10 @@ def publish_drop(code: str, db: Session = Depends(get_db)):
     if drop.status != DropStatus.draft:
         raise HTTPException(status_code=409, detail="Only a draft drop can be published")
 
-    
+    # An empty drop has nothing to sell — require at least one brick before going live.
+    if db.scalar(select(Brick).where(Brick.drop_id == drop.id)) is None:
+        raise HTTPException(status_code=409, detail="Add at least one brick before publishing")
+
     drop.status = DropStatus.live
     db.commit()
     db.refresh(drop)
