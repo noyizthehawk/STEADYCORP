@@ -18,6 +18,11 @@ export default function Layout() {
             <Link to="/collection" className="lnk">
               COLLECTION
             </Link>
+            {user.is_admin && (
+              <Link to="/admin" className="lnk">
+                ADMIN
+              </Link>
+            )}
             <button onClick={signOut} className="lnk">
               LOG OUT
             </button>
