@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import Admin from "./pages/Admin";
 import Collection from "./pages/Collection";
+import Dropadmin from "./pages/Dropadmin";
 import Landing from "./pages/Landing";
 import Lookbook from "./pages/Lookbook";
 import SignIn from "./pages/SignIn";
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/lookbook" element={<Lookbook />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/drops" element={<Dropadmin />} />
       </Route>
     </Routes>
   );

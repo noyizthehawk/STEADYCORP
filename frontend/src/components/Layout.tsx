@@ -19,9 +19,14 @@ export default function Layout() {
               COLLECTION
             </Link>
             {user.is_admin && (
-              <Link to="/admin" className="lnk">
-                ADMIN
-              </Link>
+              <>
+                <Link to="/admin" className="lnk">
+                  ADMIN
+                </Link>
+                <Link to="/admin/drops" className="lnk">
+                  DROPS
+                </Link>
+              </>
             )}
             <button onClick={signOut} className="lnk">
               LOG OUT

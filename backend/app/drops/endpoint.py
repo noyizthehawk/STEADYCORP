@@ -14,6 +14,16 @@ from app.models.enums import DropStatus
 router = APIRouter()
 
 
+@router.get(
+    "/drops",
+    response_model=list[DropOut],
+    dependencies=[Depends(require_admin)],
+)
+def list_drops(db: Session = Depends(get_db)):
+    # Admin-only: includes drafts, so this must not be a public read.
+    return db.scalars(select(Drop).order_by(Drop.created_at.desc())).all()
+
+
 @router.post(
     "/drops",
     status_code=201,

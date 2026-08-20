@@ -212,6 +212,19 @@ export async function publishDrop(code: string): Promise<Drop> {
   return res.json() as Promise<Drop>;
 }
 
+
+export async function getDrops(): Promise<Drop[]> {
+  const res = await fetch(`${BASE_URL}/api/drops`, { credentials: "include" });
+  if (!res.ok) throw new Error(await detail(res, "Could not load drops"));
+  return res.json() as Promise<Drop[]>;
+}
+
+export async function getDropBricks(code: string): Promise<Brick[]> {
+  const res = await fetch(`${BASE_URL}/api/drops/${code}/bricks`, { credentials: "include" });
+  if (!res.ok) throw new Error(await detail(res, "Could not load bricks"));
+  return res.json() as Promise<Brick[]>;
+}
+
 export type BrickCreatePayload = {
   number: number;
   title: string;

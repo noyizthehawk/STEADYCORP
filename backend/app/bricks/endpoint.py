@@ -38,6 +38,32 @@ def get_brick(drop_code: str, number: int, db: Session = Depends(get_db)):
     )
 
 
+@router.get(
+    "/drops/{code}/bricks",
+    response_model=list[BrickReveal],
+    dependencies=[Depends(require_admin)],
+)
+def list_drop_bricks(code: str, db: Session = Depends(get_db)):
+    # admine only to get all bricks related to a drop
+    drop = db.scalar(select(Drop).where(Drop.code == code.strip().upper()))
+    if drop is None:
+        raise HTTPException(status_code=404, detail="Drop does not exist")
+
+    bricks = db.scalars(
+        select(Brick).where(Brick.drop_id == drop.id).order_by(Brick.number)
+    ).all()
+    return [
+        BrickReveal(
+            number=b.number,
+            title=b.title,
+            image_url=b.image_url,
+            price_cents=b.price_cents,
+            status=BrickStatus.available if is_claimable(b) else b.status,
+        )
+        for b in bricks
+    ]
+
+
 @router.post(
     "/drops/{code}/bricks",
     status_code=201,
