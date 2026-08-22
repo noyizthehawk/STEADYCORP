@@ -21,9 +21,9 @@ export default function Collection() {
   return (
     <div className="w-full max-w-md space-y-6">
       {justPaid && <p className="uppercase tracking-[0.2em]">Payment received</p>}
-      <p className="uppercase tracking-[0.2em] text-neutral-500">Your bricks</p>
+      <p className="uppercase tracking-[0.2em] text-neutral-500"></p>
       {bricks.length === 0 ? (
-        <p className="uppercase text-neutral-500">Nothing yet.</p>
+        <p className="uppercase text-neutral-500">Nothing yet. Go get one!</p>
       ) : (
         bricks.map((b, i) => (
           <div key={i} className="space-y-2">

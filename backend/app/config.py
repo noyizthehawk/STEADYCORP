@@ -44,25 +44,32 @@ class ResendSettings(BaseSettings):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=_ENV_FILE, extra="ignore")
 
-    # --- Core ---
+    #core
     environment: str = "dev"  # ENVIRONMENT
     database_url: str = "sqlite:///./steadycorp.db"  # DATABASE_URL
     frontend_origin: str = "http://localhost:5173"  # FRONTEND_ORIGIN
 
-    # --- Auth (stateful session-id, stored in Redis) ---
+    # Auth (stateful session-id, stored in Redis)
     session_ttl_minutes: int = 60 * 24 * 7  # SESSION_TTL_MINUTES (default 7 days)
     redis_url: str = "redis://localhost:6379/0"  # REDIS_URL
 
-    # --- Drop / claim tuning ---
+    # Drop / claim tuning
     brick_hold_minutes: int = 10  # BRICK_HOLD_MINUTES
     bricks_per_drop: int = 20  # BRICKS_PER_DROP
 
-    # --- Quiz gate (K-of-N threshold) ---
+    #shipping
+    shipping_allowed_countries: str = "US,CA"  # SHIPPING_ALLOWED_COUNTRIES
+
+    @property
+    def shipping_allowed_countries_list(self) -> list[str]:
+        return [c.strip().upper() for c in self.shipping_allowed_countries.split(",") if c.strip()]
+
+    #  Quiz gate (K-of-N threshold) 
     quiz_questions_per_run: int = 6  # QUIZ_QUESTIONS_PER_RUN (N)
     quiz_required_correct: int = 3  # QUIZ_REQUIRED_CORRECT (K)
     quiz_seconds_per_question: int = 10  # QUIZ_SECONDS_PER_QUESTION
 
-    # --- Email ---
+    # email
     email_from: str = "drops@steadycorp.example"  # EMAIL_FROM
 
     # --- Grouped service configs (each reads its own PREFIX_* env vars) ---

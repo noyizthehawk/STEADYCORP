@@ -33,8 +33,13 @@ def create_checkout(db: Session, brick: Brick, user_id: int) -> str:
         ],
         success_url=f"{settings.frontend_origin}/collection?paid=1",
         cancel_url=f"{settings.frontend_origin}/store",
+        # Let Stripe collect and validate a shipping address on its hosted page.
+        shipping_address_collection={
+            "allowed_countries": settings.shipping_allowed_countries_list
+        },
         metadata={"brick_id": str(brick.id), "user_id": str(user_id)},
     )
+    #add the pending order to the db
     db.add(
         Order(
             user_id=user_id,
@@ -48,11 +53,37 @@ def create_checkout(db: Session, brick: Brick, user_id: int) -> str:
     return session.url
 
 
-def fulfill_order(db: Session, stripe_session_id: str) -> None:
+def _extract_shipping(session) -> dict | None:
+    """Extract shipping details from a Stripe Checkout Session.
+
+    Stripe's webhook gives a StripeObject (not a plain dict) whose .get() is
+    shadowed by attribute lookup, so normalize to a real dict first. Tests pass
+    plain dicts, which pass through unchanged.
+    """
+    if hasattr(session, "to_dict"):
+        session = session.to_dict()
+    details = (session.get("collected_information") or {}).get("shipping_details") or session.get(
+        "shipping_details"
+    )
+    if not details:
+        return None
+    address = details.get("address") or {}
+    return {
+        "ship_name": details.get("name"),
+        "ship_line1": address.get("line1"),
+        "ship_line2": address.get("line2"),
+        "ship_city": address.get("city"),
+        "ship_region": address.get("state"),
+        "ship_postal": address.get("postal_code"),
+        "ship_country": address.get("country"),
+    }
+
+
+def fulfill_order(db: Session, stripe_session_id: str, shipping: dict | None = None) -> None:
     """Idempotently mark an order paid + its brick sold. Safe to call repeatedly."""
     order = db.scalar(select(Order).where(Order.stripe_external_id == stripe_session_id))
     if order is None or order.status == OrderStatus.paid:
-        return  # unknown session, or already fulfilled (retry) → no-op
+        return  # unknown session, or already fulfilled
 
     # Sell the brick only if this user STILL holds it — guards the rare
     # expired-hold-then-reclaimed-by-someone-else edge (that case = refund territory).
@@ -65,5 +96,10 @@ def fulfill_order(db: Session, stripe_session_id: str) -> None:
         )
         .values(status=BrickStatus.sold)
     )
+    # Snapshot the shipping address onto the order (only on this first-fulfill path,
+    # so webhook retries — which return early above — never overwrite it).
+    if shipping:
+        for column, value in shipping.items():
+            setattr(order, column, value)
     order.status = OrderStatus.paid
     db.commit()

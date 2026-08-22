@@ -15,3 +15,12 @@ class Order(Base):
     amount_cents = Column(Integer, nullable=False)
     status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.pending)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+  
+    ship_name = Column(String, nullable=True)
+    ship_line1 = Column(String, nullable=True)
+    ship_line2 = Column(String, nullable=True)
+    ship_city = Column(String, nullable=True)
+    ship_region = Column(String, nullable=True)  # state / province
+    ship_postal = Column(String, nullable=True)
+    ship_country = Column(String, nullable=True)

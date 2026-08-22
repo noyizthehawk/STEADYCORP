@@ -1,8 +1,3 @@
-"""Auth endpoints — register / login / logout / me.
-
-The URL prefix (/api/auth) and tags are applied where this router is included,
-in app/main.py — so this file just defines handlers.
-"""
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select

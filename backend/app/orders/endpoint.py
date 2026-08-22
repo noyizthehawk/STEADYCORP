@@ -13,7 +13,7 @@ from app.models.enums import BrickStatus
 from app.models.quiz import QuizSession
 from app.models.user import User
 from app.orders.schemas import CheckoutOut, CollectionBrick
-from app.orders.service import create_checkout, fulfill_order
+from app.orders.service import _extract_shipping, create_checkout, fulfill_order
 
 settings = get_settings()
 
@@ -50,7 +50,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid webhook") from exc
 
     if event["type"] == "checkout.session.completed":
-        fulfill_order(db, event["data"]["object"]["id"])
+        session = event["data"]["object"]
+        fulfill_order(db, session["id"], shipping=_extract_shipping(session))
     return {"received": True}
 
 
